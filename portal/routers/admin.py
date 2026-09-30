@@ -1350,7 +1350,7 @@ async def admin_edit_booth(request: Request, event_id: int, room_id: int, booth_
                     pass
         await session.flush()
     return safe_redirect(
-        url=str(request.url_for("admin_booth_detail", event_id=event_id, room_id=room_id, booth_id=booth_id)),
+        url=f"/admin/events/{event_id}/rooms/{room_id}/booths/{booth_id}/",
         status_code=status.HTTP_303_SEE_OTHER,
     )
 
