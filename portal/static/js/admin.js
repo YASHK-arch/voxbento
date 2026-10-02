@@ -115,6 +115,8 @@ function initAsyncSave() {
   document.querySelectorAll('form').forEach(form => {
     const submitBtn = form.querySelector('button[type="submit"]');
     if (submitBtn && submitBtn.textContent.trim() === 'Save Settings') {
+      if (form.dataset.asyncSaveInitialized) return;
+      form.dataset.asyncSaveInitialized = 'true';
       form.addEventListener('submit', async (e) => {
         if (form.hasAttribute('data-confirm')) return; 
         
