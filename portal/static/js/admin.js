@@ -148,7 +148,8 @@ function initAsyncSave() {
             redirect: 'follow'
           });
           
-          if (response.ok) {
+          const isLoginRedirect = response.redirected && response.url.includes('/login');
+          if (response.ok && !isLoginRedirect) {
             submitBtn.textContent = 'Saved ✓';
             submitBtn.classList.remove('btn-primary');
             submitBtn.classList.add('btn-success');

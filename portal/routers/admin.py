@@ -1350,8 +1350,8 @@ async def admin_edit_booth(request: Request, event_id: int, room_id: int, booth_
             if language_code_raw:
                 try:
                     booth.language_code = validate_language_code(language_code_raw)
-                except ValueError:
-                    pass
+                except ValueError as e:
+                    raise HTTPException(status_code=400, detail=str(e))
         await session.flush()
     return safe_redirect(
         url=f"/admin/events/{event_id}/rooms/{room_id}/booths/{booth_id}/",
