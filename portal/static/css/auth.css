@@ -403,10 +403,10 @@ body:has(.login-page) .portal-footer {
 .header-nav-toggle[aria-expanded='true'] .header-nav-toggle-bar:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 
 @media (max-width: 1200px) {
-  .portal-home-header { flex-wrap: nowrap; }
-  .header-nav-toggle { display: inline-flex; }
+  .has-js-nav.portal-home-header { flex-wrap: nowrap; }
+  .has-js-nav .header-nav-toggle { display: inline-flex; }
 
-  .portal-home-header .header-nav {
+  .has-js-nav .header-nav {
     display: none;
     position: absolute;
     top: 100%;
@@ -423,8 +423,8 @@ body:has(.login-page) .portal-footer {
     overflow-y: auto;
     z-index: 99;
   }
-  .portal-home-header .header-nav.is-open { display: flex; }
-  .portal-home-header .header-nav a { width: 100%; text-align: center; padding: 10px 12px; }
+  .has-js-nav .header-nav.is-open { display: flex; }
+  .has-js-nav .header-nav a { width: 100%; text-align: center; padding: 10px 12px; }
 }
 
 @media (max-width: 768px) {

@@ -67,6 +67,8 @@ function initHeader(header) {
   const toggle = header.querySelector(TOGGLE_SELECTOR);
   if (!nav || !toggle) return;
 
+  header.classList.add('has-js-nav');
+
   const isOpen = () => toggle.getAttribute('aria-expanded') === 'true';
 
   // Set the initial closed state so the nav starts inaccessible to keyboards

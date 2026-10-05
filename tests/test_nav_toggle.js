@@ -240,6 +240,8 @@ function initHeader(header) {
   const toggle = header.querySelector(TOGGLE_SELECTOR);
   if (!nav || !toggle) return;
 
+  header.classList.add('has-js-nav');
+
   const isOpen = () => toggle.getAttribute('aria-expanded') === 'true';
 
   setOpen(header, nav, toggle, false);
@@ -318,6 +320,7 @@ console.log('\n=== nav-toggle.js Tests ===\n');
   const { header, nav, toggle } = makeFixture();
   initHeader(header);
 
+  assert(header.classList.has('has-js-nav'), 'header gets has-js-nav class for progressive enhancement');
   toggle.dispatchEvent('click');
 
   assert(nav.classList.has(OPEN_CLASS), 'nav has is-open after click');

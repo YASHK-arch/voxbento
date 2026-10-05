@@ -561,12 +561,12 @@ code { font-family: var(--font-mono); font-size: 0.85em; background: var(--color
  * past one row of content.
  */
 @media (max-width: 1200px) {
-  .admin-header, .portal-home-header { flex-wrap: nowrap; }
-  .header-left, .admin-header > .brand, .portal-home-header > .brand { min-width: 0; }
-  .header-badge { flex-shrink: 0; }
-  .header-nav-toggle { display: inline-flex; }
+  .has-js-nav.admin-header, .has-js-nav.portal-home-header { flex-wrap: nowrap; }
+  .has-js-nav .header-left, .has-js-nav.admin-header > .brand, .has-js-nav.portal-home-header > .brand { min-width: 0; }
+  .has-js-nav .header-badge { flex-shrink: 0; }
+  .has-js-nav .header-nav-toggle { display: inline-flex; }
 
-  .header-nav {
+  .has-js-nav .header-nav {
     display: none;
     position: absolute;
     top: 100%;
@@ -582,8 +582,8 @@ code { font-family: var(--font-mono); font-size: 0.85em; background: var(--color
     max-height: calc(100vh - 100%);
     overflow-y: auto;
   }
-  .header-nav.is-open { display: flex; }
-  .header-nav a, .header-nav a.btn-sm { width: 100%; text-align: center; padding: 10px 12px; }
+  .has-js-nav .header-nav.is-open { display: flex; }
+  .has-js-nav .header-nav a, .has-js-nav .header-nav a.btn-sm { width: 100%; text-align: center; padding: 10px 12px; }
 }
 
 @media (max-width: 768px) {
