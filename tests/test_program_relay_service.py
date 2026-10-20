@@ -42,6 +42,10 @@ def report(out, size):
     print("progress=continue", flush=True)
 
 
+if "tls-reject" in destination:
+    sys.stderr.write("[tls] Peer certificate failed verification\\n")
+    sys.stderr.write("[rtmp] Server returned 403 Forbidden\\n")
+    sys.exit(1)
 if "reject" in destination:
     # The specific cause is not FFmpeg's last line; classification must still find it.
     sys.stderr.write(f"[flv] Error opening output {destination}: Server returned 403 Forbidden\\n")
@@ -206,6 +210,14 @@ def test_rejected_destination_is_classified_and_redacted(relay_service, caplog):
     assert view["reason"] == "Destination rejected the stream key."
     assert KEY not in caplog.text and "reject-" not in caplog.text
     assert service.redact(f"error {rejecting}", [rejecting]) == "error [redacted]"
+
+
+def test_tls_failure_classification_is_not_overridden_by_follow_up_server_error(relay_service):
+    client, manager = relay_service
+    destination = f"rtmps://a.rtmps.youtube.com/live2/tls-reject-{KEY}"
+    assert client.put("/relays/7", json=body(destination=destination)).status_code == 200
+    assert wait_for(lambda: manager.relays["7"].restarts >= 1)
+    assert manager.relays["7"].reason == "TLS handshake with the destination failed."
 
 
 def test_restarted_relay_reports_live_again(relay_service):

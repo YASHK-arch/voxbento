@@ -44,6 +44,7 @@ STALLED_REASON = "Destination stopped accepting the stream; reconnecting."
 START_TIMEOUT_SECS = 30.0
 NOT_FORWARDING_REASON = "No media reached the destination; reconnecting."
 GENERIC_REASON = "Relay process exited; retrying."
+TLS_FAILURE_REASON = "TLS handshake with the destination failed."
 BACKOFF_MAX_SECS = 30.0
 # Debian's ca-certificates bundle, present in the relay image.
 DEFAULT_CA_FILE = "/etc/ssl/certs/ca-certificates.crt"
@@ -55,7 +56,7 @@ ERROR_CLASSES = (
         re.compile(r"(?i)connection refused|timed out|no route|network is unreachable|name or service"),
         "Destination unreachable.",
     ),
-    (re.compile(r"(?i)tls|ssl|certificate|handshake"), "TLS handshake with the destination failed."),
+    (re.compile(r"(?i)tls|ssl|certificate|handshake"), TLS_FAILURE_REASON),
     (re.compile(r"(?i)rtsp|404 not found|server returned 404"), "Floor stream unavailable at the media server."),
     (
         re.compile(r"(?i)codec|could not find tag|not supported|invalid data"),
@@ -314,7 +315,8 @@ class RelayManager:
                 for line in process.stderr:
                     if line.strip():
                         kind = classify(redact(line.strip(), secrets_))
-                        if kind != GENERIC_REASON:
+                        # TLS failures take precedence over secondary RTMP status messages.
+                        if kind == TLS_FAILURE_REASON or (reason != TLS_FAILURE_REASON and kind != GENERIC_REASON):
                             reason = kind
 
             def watchdog() -> None:
