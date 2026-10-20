@@ -9,14 +9,23 @@ const successAlert = document.getElementById("demo-success");
 const errorAlert = document.getElementById("demo-error");
 
 let demoStep = 1;
+const STEP_TWO_REQUIRED_IDS = [
+  "demo-firstname",
+  "demo-lastname",
+  "demo-phone",
+  "demo-company",
+  "demo-country",
+  "demo-language",
+];
 
 function fieldValue(id) {
   return document.getElementById(id)?.value ?? "";
 }
 
-function setStepTwoRequirements() {
-  ["demo-firstname", "demo-lastname", "demo-phone", "demo-company", "demo-country", "demo-language"].forEach((id) => {
-    document.getElementById(id).required = true;
+function setStepTwoRequirements(required) {
+  STEP_TWO_REQUIRED_IDS.forEach((id) => {
+    const field = document.getElementById(id);
+    if (field) field.required = required;
   });
 }
 
@@ -27,6 +36,7 @@ function openDemoModal() {
   modal.setAttribute("aria-hidden", "false");
   document.body.classList.add("demo-modal-no-scroll");
   demoStep = 1;
+  setStepTwoRequirements(false);
   step1?.classList.remove("is-hidden");
   step2?.classList.add("is-hidden");
   successAlert?.classList.remove("is-visible");
@@ -47,7 +57,7 @@ function showStepTwo() {
   demoStep = 2;
   step1?.classList.add("is-hidden");
   step2?.classList.remove("is-hidden");
-  setStepTwoRequirements();
+  setStepTwoRequirements(true);
   if (submitLabel) submitLabel.textContent = "Submit Request";
 }
 
