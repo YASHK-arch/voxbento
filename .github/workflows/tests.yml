@@ -252,11 +252,13 @@ jobs:
           node --check portal/static/js/whep-listener.js
           node --check portal/static/js/admin.js
           node --check portal/static/js/demo-modal.js
+          node --check portal/static/js/developer.js
       - name: run node tests
         run: |
           node tests/test_audio_scheduler.js
           node tests/test_tts_parser.js
           node tests/test_demo_modal.js
+          node tests/test_developer_copy.js
 
       - name: Run unit tests
         run: uv run pytest tests/ -v
