@@ -4,34 +4,39 @@
  */
 
 async function copyText(text) {
+  // Try synchronous fallback first (must be within user gesture)
+  if (typeof document.execCommand === 'function') {
+    let textarea;
+    try {
+      textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.readOnly = true;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      if (document.execCommand('copy')) {
+        return true;
+      }
+    } catch (error) {
+      console.error('Clipboard fallback failed:', error);
+    } finally {
+      textarea?.remove();
+    }
+  }
+
+  // Fallback failed or unavailable, try async Clipboard API
   if (navigator.clipboard?.writeText) {
     try {
       await navigator.clipboard.writeText(text);
       return true;
     } catch (error) {
-      console.error('Clipboard API failed; trying execCommand fallback:', error);
+      console.error('Clipboard API failed:', error);
     }
   }
 
-  if (typeof document.execCommand !== 'function') return false;
-
-  let textarea;
-  try {
-    textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.readOnly = true;
-    textarea.style.position = 'fixed';
-    textarea.style.opacity = '0';
-    document.body.appendChild(textarea);
-    textarea.focus();
-    textarea.select();
-    return document.execCommand('copy');
-  } catch (error) {
-    console.error('Clipboard fallback failed:', error);
-    return false;
-  } finally {
-    textarea?.remove();
-  }
+  return false;
 }
 
 /**
@@ -101,7 +106,9 @@ function initCreateAppModal() {
     cancelBtn.addEventListener('click', () => {
       modalCreate.classList.remove('active');
     });
+  }
 
+  if (modalCreate) {
     modalCreate.addEventListener('click', (e) => {
       if (e.target === modalCreate) {
         modalCreate.classList.remove('active');
