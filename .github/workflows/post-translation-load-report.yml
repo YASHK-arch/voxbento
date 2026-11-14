@@ -6,7 +6,7 @@ on:
     types: [completed]
 
 concurrency:
-  group: post-translation-load-report-${{ github.event.workflow_run.head_sha }}
+  group: post-translation-load-report
   cancel-in-progress: false
 
 permissions:
@@ -44,36 +44,39 @@ jobs:
             }
 
             // 1. Derive the target PR from trusted GitHub metadata
-            let targetPr = null;
+            let targetPrNumber = null;
             const prs = run.pull_requests ?? [];
             if (prs.length > 0 && prs[0]?.number) {
-              const { data: prData } = await github.rest.pulls.get({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: prs[0].number,
-              });
-              targetPr = prData;
+              targetPrNumber = prs[0].number;
             } else {
               const { data: associatedPrs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 commit_sha: headSha,
               });
-              targetPr = associatedPrs.find((p) => p.state === 'open') ?? associatedPrs[0];
+              const found = associatedPrs.find((p) => p.state === 'open') ?? associatedPrs[0];
+              targetPrNumber = found?.number;
             }
 
-            if (!targetPr || !targetPr.number) {
+            if (!targetPrNumber) {
               core.info(`No pull request found associated with head SHA ${headSha}.`);
               return;
             }
 
-            // 2. Reject stale out-of-order runs
-            if (targetPr.head.sha !== headSha) {
-              core.info(`PR #${targetPr.number} head SHA (${targetPr.head.sha}) has moved past this run (${headSha}). Skipping stale run.`);
+            // Fetch current, real-time PR state
+            const { data: latestPr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: targetPrNumber,
+            });
+
+            // 2. Reject stale out-of-order runs: verify headSha is still the PR's current head
+            if (latestPr.head.sha !== headSha) {
+              core.info(`PR #${targetPrNumber} head SHA (${latestPr.head.sha}) has moved past this run (${headSha}). Skipping stale run.`);
               return;
             }
 
-            // 3. Verify artifact authenticity against derived targetPr
+            // 3. Verify artifact authenticity against derived target PR
             const commentFile = path.join(process.cwd(), 'report', 'comment.md');
             const prNumberFile = path.join(process.cwd(), 'report', 'pr_number.txt');
             const artifactShaFile = path.join(process.cwd(), 'report', 'head_sha.txt');
@@ -85,8 +88,8 @@ jobs:
 
             if (fs.existsSync(prNumberFile)) {
               const artifactPrNumber = parseInt(fs.readFileSync(prNumberFile, 'utf8').trim(), 10);
-              if (artifactPrNumber && artifactPrNumber !== targetPr.number) {
-                core.setFailed(`Artifact PR number (${artifactPrNumber}) does not match trusted target PR (${targetPr.number}). Potential forgery rejected.`);
+              if (artifactPrNumber && artifactPrNumber !== targetPrNumber) {
+                core.setFailed(`Artifact PR number (${artifactPrNumber}) does not match trusted target PR (${targetPrNumber}). Potential forgery rejected.`);
                 return;
               }
             }
@@ -100,21 +103,20 @@ jobs:
             }
 
             const body = fs.readFileSync(commentFile, 'utf8').trim();
-            const prNumber = targetPr.number;
             const { owner, repo } = context.repo;
             const marker = '<!-- translation-load-benchmark-report -->';
 
             const { data: comments } = await github.rest.issues.listComments({
               owner,
               repo,
-              issue_number: prNumber,
+              issue_number: targetPrNumber,
               per_page: 100,
             });
 
             const existingComment = comments.find((c) => c.body && c.body.includes(marker));
 
             if (existingComment) {
-              core.info(`Updating existing comment #${existingComment.id} on PR #${prNumber}`);
+              core.info(`Updating existing comment #${existingComment.id} on PR #${targetPrNumber}`);
               await github.rest.issues.updateComment({
                 owner,
                 repo,
@@ -122,11 +124,11 @@ jobs:
                 body,
               });
             } else {
-              core.info(`Creating new comment on PR #${prNumber}`);
+              core.info(`Creating new comment on PR #${targetPrNumber}`);
               await github.rest.issues.createComment({
                 owner,
                 repo,
-                issue_number: prNumber,
+                issue_number: targetPrNumber,
                 body,
               });
             }

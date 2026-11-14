@@ -40,12 +40,10 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
           mkdir -p report
           echo "$PR_NUMBER" > report/pr_number.txt
           echo "$HEAD_SHA" > report/head_sha.txt
-          echo "${BASE_REF:-dev}" > report/base_ref.txt
 
           set +e
           uv run python tests/translation_load_harness.py \
@@ -58,13 +56,10 @@ jobs:
             echo "Benchmark produced no table output (exit code $PR_STATUS)." > report/pr_table.md
           fi
 
-      - name: Run benchmark on baseline
+      - name: Run benchmark on dev baseline
         shell: bash
-        env:
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
-          TARGET_BASE="${BASE_REF:-dev}"
-          git clone --depth 1 --branch "$TARGET_BASE" "https://github.com/${{ github.repository }}.git" dev-baseline || true
+          git clone --depth 1 --branch dev "https://github.com/${{ github.repository }}.git" dev-baseline || true
           if [ -f dev-baseline/tests/translation_load_harness.py ]; then
             (cd dev-baseline && uv sync --python 3.13 --dev --frozen && uv run python tests/translation_load_harness.py \
               --rooms 3 --languages 1,4 --segments 6 --interval 0.5 --latency 0.1 --markdown \
@@ -85,9 +80,6 @@ jobs:
           sha = sha_file.read_text(encoding="utf-8").strip() if sha_file.exists() else ""
           short_sha = sha[:7] if sha else "PR"
 
-          base_file = pathlib.Path("report/base_ref.txt")
-          base_ref = base_file.read_text(encoding="utf-8").strip() if base_file.exists() else "dev"
-
           status_file = pathlib.Path("report/pr_status.txt")
           status = status_file.read_text(encoding="utf-8").strip() if status_file.exists() else "0"
 
@@ -106,14 +98,14 @@ jobs:
           comment = f"""### 📊 Translation Load Benchmark Report
 
           {status_banner}
-          Comparison of PR branch against `{base_ref}` baseline.
+          Comparison of PR branch against `dev` baseline.
 
           #### 🚀 PR Branch (`{short_sha}`)
 
           {pr_table}
 
           <details>
-          <summary><b>📌 <code>{base_ref}</code> Baseline</b></summary>
+          <summary><b>📌 <code>dev</code> Baseline</b></summary>
 
           {dev_table}
 
